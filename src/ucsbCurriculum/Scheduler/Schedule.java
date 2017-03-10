@@ -7,12 +7,21 @@ import ucsbCurriculum.Utility.*;
 
 public class Schedule {
 	 
-    private ArrayList<Course> courses; // ArrayList of lectures
-    private ArrayList<ArrayList<Time>> sections;  // ArrayList of (ArrayList of sections) 
+    public ArrayList<Course> courses; // ArrayList of lectures
+    private ArrayList<ArrayList<Time>> sections;  // ArrayList of (ArrayList of sections)
+    
+    private ArrayList<Course> backupCourses;
+    private ArrayList<ArrayList<Time>> backupSections;
+    
+    //schedule restraints
+    int onlySectionsAfter = 0;
+    int onlySectionsBefore = 0;
     
     public Schedule(){
         courses = new ArrayList<Course>();
         sections = new ArrayList<ArrayList<Time>>();
+        backupCourses = new ArrayList<Course>();
+        backupSections = new ArrayList<ArrayList<Time>>();
     }
 
     public static boolean compare(ArrayList<Time> time1, ArrayList<Time> time2) {
@@ -62,6 +71,48 @@ public class Schedule {
 
       courses.add(c);
       sections.add(sectionTime);
+      backupCourses.add(c);
+      backupSections.add(sectionTime);
+    }
+    
+    public void setOnlySectionsBefore(int restraint){
+    	onlySectionsBefore = restraint;
+    }
+    
+    public void setOnlySectionsAfter(int restraint){
+    	onlySectionsAfter = restraint;
+    }
+    
+    public void setOnlySectionsBefore(String restraint){
+    	int answer = 0;
+    	restraint = restraint.replaceAll("\\s+", "");
+    	for(int i = 0; i<restraint.length(); i++){
+    		char c = restraint.charAt(i);
+    		if(Character.isDigit(c)){
+    			answer = Character.getNumericValue(c);
+    		}
+    		if(c=='p'){
+    			answer = answer + 12;
+    		}
+    		
+    	}
+    	onlySectionsBefore = answer;
+    }
+    
+    public void setOnlySectionsAfter(String restraint){
+    	int answer = 0;
+    	restraint = restraint.replaceAll("\\s+", "");
+    	for(int i = 0; i<restraint.length(); i++){
+    		char c = restraint.charAt(i);
+    		if(Character.isDigit(c)){
+    			answer = Character.getNumericValue(c);
+    		}
+    		if(c=='p'){
+    			answer = answer + 12;
+    		}
+    		
+    	}
+    	onlySectionsAfter = answer;
     }
     
     
@@ -89,22 +140,58 @@ public class Schedule {
 	    	return res;
     }
     
-    
+  
 
     //removes course c's information from lecture times and section times array lists
     public void delete(Course c) {
 	    	int i = courses.indexOf(c);
 	    	courses.remove(i);
 	    	sections.remove(i);
+	    	backupCourses.remove(i);
+	    	backupSections.remove(i);
 	    	System.out.println(c.get_id() + " is being deleted.");
 	    	//user should be given some kind of warning - course being deleted because of time conflict/or personal choice
     }
     
+    //rearrange course list to be in order of increasing section list size
+    //this ensures that courses with less sections are considered first, to maximize possible schedules
+    public void sortOrderBySectionSize(){
+    	
+    	ArrayList<ArrayList<Time>> newSection = new ArrayList<ArrayList<Time>>();
+    	ArrayList<Course> newCourses = new ArrayList<Course>();
+    	
+    	while(sections.size() != 0){
+    		int pos = 0;
+    		int posSize = 0;
+    		for(int i = 0; i<sections.size(); i++){
+    			if( ((sections.get(i)).size()) > posSize ){
+    				posSize = (sections.get(i)).size();
+    				pos = i;
+    			}
+    		}
+    		Course c = courses.get(pos);
+    		newCourses.add(c);
+    		newSection.add(c.get_sectionTimes());
+    		courses.remove(pos);
+    		sections.remove(pos);
+    	}
+    	
+    	for(int i = newCourses.size()-1; i >= 0; i--){
+    		Course e = newCourses.get(i);
+    		add(e);
+    	}
+    	
+    	
+    }
+    
+    
     //goes through array list of sections and deletes all section times that have conflicts with other times
-    //courses that were added first have higher priority
+    //courses are now rearranged to prioritize classes with less sections, to maximize available sections and classes
     //if a course has zero available section times left after comparison, it will be deleted from the list
     public void deleteConflicts() {
-    	//first check all sections against conflicting lecture times
+    	//first rearrange courses by order of increasing section list size
+    	sortOrderBySectionSize();
+    	//check all sections against conflicting lecture times
     	for (int i = 0; i < sections.size(); i++) {
     		boolean sectionToLectureConflict = true;
     		for (int j = 0; j < courses.size(); j++) {
@@ -130,5 +217,35 @@ public class Schedule {
 				}
 			}
 		}
-	}    
+	} 
+    
+    //takes parameters given from setOnlySectionsAfter/setOnlySectionsBefore
+    //deletes any section that does not fit within user given constraints.
+    //At least one section will remain in the section list, even if it does not fit within the restraints. 
+    //this method should ONLY be called after delete conflicts is called. It is optionally called, and only if the user inputs restraints.
+    public void deleteRestraintConflicts(){
+    	for (int i = 0; i<sections.size(); i++){
+    		ArrayList<Time> currentSection = sections.get(i);
+    		for (int j = 0; j<currentSection.size(); j++){
+    			int startH = currentSection.get(j).startHour;
+    			if(onlySectionsBefore != 0){
+    				if(!(startH < onlySectionsBefore)){
+    					if(currentSection.size() > 1){
+    						currentSection.remove(j);
+    					}
+    				}
+    			}
+    			if(onlySectionsAfter != 0){
+    				if(!(startH >= onlySectionsAfter)){
+    					if(currentSection.size() > 1){
+    						currentSection.remove(j);
+    					}
+    				}
+    			}
+    			
+    		}
+    	}
+    }
+    
+    
 }
