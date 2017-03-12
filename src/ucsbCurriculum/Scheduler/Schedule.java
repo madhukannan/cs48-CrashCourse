@@ -14,8 +14,8 @@ public class Schedule {
     private ArrayList<ArrayList<Time>> backupSections;
     
     //schedule restraints
-    int onlySectionsAfter = 0;
-    int onlySectionsBefore = 0;
+    public int onlySectionsAfter = 0;
+    public int onlySectionsBefore = 0;
     
     public Schedule(){
         courses = new ArrayList<Course>();
@@ -86,15 +86,17 @@ public class Schedule {
     public void setOnlySectionsBefore(String restraint){
     	int answer = 0;
     	restraint = restraint.replaceAll("\\s+", "");
-    	for(int i = 0; i<restraint.length(); i++){
-    		char c = restraint.charAt(i);
-    		if(Character.isDigit(c)){
-    			answer = Character.getNumericValue(c);
+    	int x = 0;
+    	char c = restraint.charAt(x);
+    	char next = restraint.charAt(x+1);
+    	if(next != '0' && Character.isDigit(next)){
+    		answer = 10 + Character.getNumericValue(c);
     		}
-    		if(c=='p'){
-    			answer = answer + 12;
-    		}
-    		
+    	else{
+    		answer = Character.getNumericValue(c);
+    	}
+    	if(restraint.contains("pm")){
+    		answer = answer + 12;
     	}
     	onlySectionsBefore = answer;
     }
@@ -102,15 +104,17 @@ public class Schedule {
     public void setOnlySectionsAfter(String restraint){
     	int answer = 0;
     	restraint = restraint.replaceAll("\\s+", "");
-    	for(int i = 0; i<restraint.length(); i++){
-    		char c = restraint.charAt(i);
-    		if(Character.isDigit(c)){
-    			answer = Character.getNumericValue(c);
+    	int x = 0;
+    	char c = restraint.charAt(x);
+    	char next = restraint.charAt(x+1);
+    	if(next != '0' && Character.isDigit(next)){
+    		answer = 10 + Character.getNumericValue(c);
     		}
-    		if(c=='p'){
-    			answer = answer + 12;
-    		}
-    		
+    	else{
+    		answer = Character.getNumericValue(c);
+    	}
+    	if(restraint.contains("pm")){
+    		answer = answer + 12;
     	}
     	onlySectionsAfter = answer;
     }
